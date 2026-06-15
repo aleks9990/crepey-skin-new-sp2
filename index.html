@@ -15520,6 +15520,10 @@ body.dom-pending * {
       cta.setAttribute('data-selected-pack', pack);
       cta.setAttribute('aria-label', 'Get 67% Off Today - ' + (packLabels[pack] || 'selected package'));
     });
+
+    if (window.nvUpdateBuyOnceForPack) {
+      window.nvUpdateBuyOnceForPack(pack);
+    }
   }
 
   function initPackSelection() {
@@ -15615,6 +15619,23 @@ body.dom-pending * {
 })();
 </script><script id="nv-other-cta-rating-target">
 (function () {
+  function isMobile() {
+    return window.matchMedia && window.matchMedia('(max-width: 768px)').matches;
+  }
+
+  function scrollToLimitedOffer() {
+    var target = document.querySelector('#nv-hero .nv-pack-grid-reference') || document.getElementById('nv-hero');
+    if (!target) return;
+    var header = document.getElementById('nv-sticky-header');
+    var headerStyle = header ? window.getComputedStyle(header) : null;
+    var offset = header && headerStyle && headerStyle.position === 'fixed' ? header.offsetHeight + 64 : 64;
+    var y = target.getBoundingClientRect().top + window.pageYOffset - offset;
+    window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    if (window.history && window.history.replaceState) {
+      window.history.replaceState(null, '', '#nv-limited-time-offer');
+    }
+  }
+
   function scrollToRating() {
     var target = document.querySelector('#nv-hero .nv-sale-proof') || document.getElementById('nv-hero');
     if (!target) return;
@@ -15646,6 +15667,11 @@ body.dom-pending * {
     if (!shouldRoute(el)) return;
     event.preventDefault();
     event.stopImmediatePropagation();
+    var label = (el.textContent || el.getAttribute('title') || el.getAttribute('aria-label') || '').replace(/\s+/g, ' ').trim();
+    if (isMobile() && /claim\s*my\s*discount/i.test(label)) {
+      scrollToLimitedOffer();
+      return;
+    }
     scrollToRating();
   }, true);
 })();
@@ -15979,4 +16005,112 @@ html body #nv-hero .nv-payment-badges {
     top: 188px !important;
   }
 }
-</style></body></html>
+</style><style id="nv-buy-once-final-css">
+html body #nv-hero .nv-buy-once-link {
+  display: block !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  margin: 22px auto 4px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  color: #17222e !important;
+  font-family: inherit !important;
+  font-size: 16px !important;
+  line-height: 1.25 !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  text-align: center !important;
+  text-decoration: none !important;
+  text-transform: uppercase !important;
+  cursor: pointer !important;
+}
+
+html body #nv-hero .nv-buy-once-link strong {
+  color: #17222e !important;
+  font-weight: 800 !important;
+}
+
+html body #nv-hero .nv-buy-once-link:hover {
+  color: #052f55 !important;
+  text-decoration: underline !important;
+}
+
+@media (max-width: 768px) {
+  html body #nv-hero .nv-buy-once-link {
+    margin: 23px auto 4px !important;
+    font-size: 14px !important;
+    line-height: 1.25 !important;
+  }
+}
+</style><script id="nv-buy-once-final-script">
+(function () {
+  var noSavingsPrices = {
+    '1': '$10.00',
+    '3': '$20.00',
+    '4': '$30.00'
+  };
+
+  function getSelectedPack(root) {
+    var selected = root.querySelector('.nv-pack-card.is-selected[data-pack]');
+    return selected ? selected.getAttribute('data-pack') : '3';
+  }
+
+  function renderBuyOnce(link, pack) {
+    var price = noSavingsPrices[pack] || noSavingsPrices['3'];
+    link.innerHTML = 'BUY ONCE - NO SAVINGS <strong>' + price + '</strong> &rarr;';
+    link.setAttribute('data-selected-pack', pack);
+    link.setAttribute('data-purchase-type', 'one-time');
+    link.setAttribute('aria-label', 'Buy once, no savings ' + price);
+  }
+
+  function ensureBuyOnce(forcedPack) {
+    document.querySelectorAll('#nv-hero .nv-hero-content').forEach(function (content) {
+      var list = content.querySelector('.nv-afterpay-list');
+      if (!list) return;
+
+      var link = content.querySelector('.nv-buy-once-link');
+      if (!link) {
+        link = document.createElement('a');
+        link.className = 'nv-buy-once-link';
+        link.href = '#nv-best-offer';
+        list.insertAdjacentElement('afterend', link);
+      }
+
+      renderBuyOnce(link, forcedPack || getSelectedPack(content));
+    });
+  }
+
+  window.nvUpdateBuyOnceForPack = function (pack) {
+    ensureBuyOnce(pack);
+  };
+
+  document.addEventListener('click', function (event) {
+    var card = event.target.closest && event.target.closest('#nv-hero .nv-pack-card[data-pack]');
+    if (!card) return;
+    setTimeout(ensureBuyOnce, 0);
+  }, true);
+
+  document.addEventListener('click', function (event) {
+    var link = event.target.closest && event.target.closest('#nv-hero .nv-buy-once-link');
+    if (!link) return;
+    var content = link.closest('.nv-hero-content') || document;
+    var pack = getSelectedPack(content);
+    renderBuyOnce(link, pack);
+    document.querySelectorAll('#nv-hero .nv-offer-cta').forEach(function (cta) {
+      cta.setAttribute('data-selected-pack', pack);
+      cta.setAttribute('data-purchase-type', 'one-time');
+    });
+  }, true);
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', ensureBuyOnce);
+  } else {
+    ensureBuyOnce();
+  }
+
+  window.addEventListener('load', ensureBuyOnce);
+  setTimeout(ensureBuyOnce, 250);
+  setTimeout(ensureBuyOnce, 1000);
+})();
+</script></body></html>

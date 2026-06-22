@@ -18711,21 +18711,33 @@ html body #cc-id-FhxaAgJDONFm.nv-step3-clean .nv-step3-clean__media-frame img {
 </style>
 <script id="nv-comparison-collagen-final-script">
 (function () {
-  var collagenRows = [
-    'Digested &mdash; only ~10% survives',
-    'Goes to your face &amp; joints first &mdash; legs last',
-    '&ldquo;10 years of powder &mdash; arms still crepey&rdquo;',
-    'A chalky scoop to choke down daily',
-    'Swallow it and just hope',
-    'No refund on a year of nothing'
+  var comparisonRows = [
+    ['Reaches where skin collapsed', 'Driven in, right where you roll', 'Sits on top, never absorbs', '&ldquo;Just a lotion&rdquo; on the surface', 'Digested &mdash; only ~10% survives'],
+    ['Works right where you need it', 'Arms, thighs, knees &mdash; on the spot', 'Smear everywhere, hope', 'Rubs into your palms', 'Goes to your face &amp; joints first &mdash; legs last'],
+    ['A difference you feel, fast', 'From the first roll', '&ldquo;Looks the same after 2 bottles&rdquo;', '&ldquo;6 months... no difference&rdquo;', '&ldquo;10 years of powder &mdash; arms still crepey&rdquo;'],
+    ['No grease, no mess, no smell', 'Glide on, dressed in seconds', 'Greasy hands, &ldquo;cats ran from the smell&rdquo;', 'Thick, sticky, medicinal smell', 'A chalky scoop to choke down daily'],
+    ['Honest &mdash; no magic, no miracle', 'You feel it work, or money back', '&ldquo;Magic&rdquo; that needs a refill', '&ldquo;Miracle&rdquo; that erases nothing', 'Swallow it and just hope'],
+    ['90-day money-back guarantee', '90 days, no questions', 'No returns once opened', 'Rarely guaranteed on results', 'No refund on a year of nothing']
   ];
+
+  function okCell(text) {
+    return '<div class="nv3-cell"><span class="nv3-mark nv3-mark-ok">&#10003;</span><span>' + text + '</span></div>';
+  }
 
   function badCell(text) {
     return '<div class="nv3-cell"><span class="nv3-mark nv3-mark-bad">&times;</span><span>' + text + '</span></div>';
   }
 
+  function mobileOkCell(text) {
+    return '<div class="nv3ms-cell"><span class="nv3ms-icon nv3ms-ok">&#10003;</span><span>' + text + '</span></div>';
+  }
+
   function mobileBadCell(text) {
     return '<div class="nv3ms-cell"><span class="nv3ms-icon nv3ms-bad">&times;</span><span>' + text + '</span></div>';
+  }
+
+  function productCol(title, rows, isPrimary) {
+    return '<div class="nv3ms-product-col' + (isPrimary ? ' is-primary' : '') + '"><div class="nv3ms-product-title">' + title + '</div>' + rows.join('') + '</div>';
   }
 
   function patchClinicalCopy() {
@@ -18750,6 +18762,11 @@ html body #cc-id-FhxaAgJDONFm.nv-step3-clean .nv-step3-clean__media-frame img {
       label.innerHTML = '<img class="nv3-head-product nv3-head-product-small nv3-head-product-powder" src="powder.png" alt="Collagen Powders"><span>Collagen Powders</span>';
       headRow.appendChild(label);
     }
+    var headLabels = headRow.querySelectorAll('.nv3-head-label span');
+    if (headLabels[0]) headLabels[0].textContent = 'Cooling Roller';
+    if (headLabels[1]) headLabels[1].textContent = '"Magic" Oils';
+    if (headLabels[2]) headLabels[2].textContent = '"Miracle" Creams';
+    if (headLabels[3]) headLabels[3].textContent = 'Collagen Powders';
 
     var colgroup = table.querySelector('colgroup');
     if (colgroup && colgroup.children.length < 5) {
@@ -18758,13 +18775,11 @@ html body #cc-id-FhxaAgJDONFm.nv-step3-clean .nv-step3-clean__media-frame img {
       colgroup.appendChild(document.createElement('col'));
     }
 
-    var rows = table.querySelectorAll('tbody tr');
-    rows.forEach(function (row, index) {
-      if (row.children.length >= 5) return;
-      var td = document.createElement('td');
-      td.innerHTML = badCell(collagenRows[index] || 'No refund on a year of nothing');
-      row.appendChild(td);
-    });
+    var tbody = table.querySelector('tbody');
+    if (!tbody) return;
+    tbody.innerHTML = comparisonRows.map(function (row) {
+      return '<tr><th class="nv3-feature" scope="row">' + row[0] + '</th><td>' + okCell(row[1]) + '</td><td>' + badCell(row[2]) + '</td><td>' + badCell(row[3]) + '</td><td>' + badCell(row[4]) + '</td></tr>';
+    }).join('');
 
     table.setAttribute('aria-label', 'Comparison of Cooling Roller, Magic Oils, Miracle Creams, and Collagen Powders');
   }
@@ -18775,14 +18790,18 @@ html body #cc-id-FhxaAgJDONFm.nv-step3-clean .nv-step3-clean__media-frame img {
     var track = slider.querySelector('.nv3ms-track');
     if (!track) return;
 
-    if (!track.querySelector('.nv3ms-product-title') || !Array.prototype.some.call(track.querySelectorAll('.nv3ms-product-title'), function (item) {
-      return item.textContent.trim() === 'Collagen Powders';
-    })) {
-      var col = document.createElement('div');
-      col.className = 'nv3ms-product-col';
-      col.innerHTML = '<div class="nv3ms-product-title">Collagen Powders</div>' + collagenRows.map(mobileBadCell).join('');
-      track.appendChild(col);
+    var features = slider.querySelector('.nv3ms-features');
+    if (features) {
+      features.innerHTML = '<div class="nv3ms-feature-head"></div>' + comparisonRows.map(function (row) {
+        return '<div class="nv3ms-feature">' + row[0] + '</div>';
+      }).join('');
     }
+
+    track.innerHTML =
+      productCol('Cooling Roller', comparisonRows.map(function (row) { return mobileOkCell(row[1]); }), true) +
+      productCol('"Magic" Oils', comparisonRows.map(function (row) { return mobileBadCell(row[2]); }), false) +
+      productCol('"Miracle" Creams', comparisonRows.map(function (row) { return mobileBadCell(row[3]); }), false) +
+      productCol('Collagen Powders', comparisonRows.map(function (row) { return mobileBadCell(row[4]); }), false);
 
     var prev = slider.querySelector('.nv3ms-prev');
     var next = slider.querySelector('.nv3ms-next');
